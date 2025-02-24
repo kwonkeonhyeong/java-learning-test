@@ -498,6 +498,10 @@ public class FunctionalProgrammingTest {
                     .map(Map.Entry::getValue)
                     .orElseThrow();
 
+            final var numbers = Stream.generate(() -> (int) (Math.random() * 5))
+                .limit(10)
+                .toList();
+
             assertThat(result).isEqualTo(31_949L);
         }
 

@@ -1,5 +1,9 @@
 package cholog;
 
+import java.util.Arrays;
+import java.util.Map;
+import java.util.OptionalLong;
+import java.util.stream.Collectors;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -20,6 +24,7 @@ import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.setRemoveAssertJRelatedElementsFromStackTrace;
 import static org.junit.jupiter.api.Assertions.assertAll;
 
 /**
@@ -64,6 +69,26 @@ public class FunctionalProgrammingTest {
         @Test
         @DisplayName("사용자가 만든 인터페이스를 구현하는 익명 클래스")
         void 사용자가_만든_인터페이스를_구현하는_익명_클래스() {
+            interface HippoAnonymousClass {
+                void eat();
+                void drink();
+            }
+
+            HippoAnonymousClass hippoAnonymousClass = new HippoAnonymousClass() {
+                @Override
+                public void eat() {
+                    System.out.println("배고파 집에 갈래?");
+                }
+
+                @Override
+                public void drink() {
+                    System.out.println("커피 또 마실거니??");
+                }
+            };
+
+            hippoAnonymousClass.eat();
+            hippoAnonymousClass.drink();
+
             interface CustomAnonymousClass {
                 void call();
 
@@ -104,6 +129,15 @@ public class FunctionalProgrammingTest {
             final FunctionalInterface functionalInterface = () -> System.out.println("함수형 인터페이스");
             functionalInterface.call();
 
+            @java.lang.FunctionalInterface
+            interface HippoLambdaInterface {
+                void eat();
+            }
+
+            HippoLambdaInterface hippoLambdaInterface = () -> System.out.println("glbhbhbh");
+
+            hippoLambdaInterface.eat();
+
             /* Note: 여러 개의 메서드를 구현한 경우 함수형 인터페이스가 아니므로 람다로 구현할 수 없습니다.
             interface MultipleLambda {
                 void call();
@@ -126,7 +160,7 @@ public class FunctionalProgrammingTest {
         @Test
         @DisplayName("User의 나이를 기준으로 정렬한다")
         void User의_나이를_기준으로_정렬한다() {
-            record User(String name, int age) {
+            record User(String name, int age){
             }
 
             final var brown = new User("Brown", 78);
@@ -135,7 +169,7 @@ public class FunctionalProgrammingTest {
 
             // TODO: 아래 코드를 Comparator를 구현하는 익명 클래스로 변경하여 User의 나이를 기준으로 정렬하세요. 람다로도 구현해보세요.
             final var users = new ArrayList<User>(List.of(brown, neo, brie));
-            for (int i = 0, end = users.size(); i < end; i++) {
+            /*for (int i = 0, end = users.size(); i < end; i++) {
                 for (int j = i + 1; j < end; j++) {
                     if (users.get(i).age() > users.get(j).age()) {
                         final var temp = users.get(i);
@@ -143,7 +177,44 @@ public class FunctionalProgrammingTest {
                         users.set(j, temp);
                     }
                 }
+            }*/
+
+
+            /*
+            interface UserComparator extends Comparator<User>{
+                @Override
+                int compare(User o1, User o2);
             }
+            */
+
+            @FunctionalInterface
+            interface UserComparator extends Comparator<User>{
+            }
+
+//            UserComparator userComparator = (user1, user2) -> Integer.compare(user1.age, user2.age);
+//            users.sort(userComparator);
+
+            users.sort((user1, user2) -> -1 * Integer.compare(user1.age, user2.age));
+
+
+            /*
+            UserComparator userComparator = new UserComparator() {
+                @Override
+                public int compare(User o1, User o2) {
+                    return o1.age - o2.age;
+                }
+            };*/
+
+            /*
+            users.sort(new Comparator<User>() {
+                @Override
+                public int compare(User o1, User o2) {
+                    return o1.age - o2.age;
+                }
+            });
+            */
+
+
 
             for (final var user : users) {
                 System.out.println(user.name() + ": " + user.age());
@@ -176,6 +247,12 @@ public class FunctionalProgrammingTest {
         void Function() {
             final Function<String, String> function = value -> value;
             System.out.println(function.apply("Function"));
+
+            final Function<Integer, Integer> functionInteger = intValue -> intValue + 2;
+            System.out.println(functionInteger.apply(2));
+
+            final Function<String, Integer> convertFunction = Integer::parseInt;
+            System.out.println(convertFunction);
         }
 
         /**
@@ -189,6 +266,10 @@ public class FunctionalProgrammingTest {
         void Consumer() {
             final Consumer<String> consumer = value -> System.out.println(value);
             consumer.accept("Consumer");
+
+            final Consumer<Integer> integerConsumer = intValue -> System.out.println(intValue + 2);
+
+            integerConsumer.accept(3);
         }
 
         /**
@@ -202,6 +283,18 @@ public class FunctionalProgrammingTest {
         void Supplier() {
             final Supplier<String> supplier = () -> "Supplier";
             System.out.println(supplier.get());
+
+            final Supplier<Integer> intSupplier = () -> 2;
+            final Supplier<Runnable> runnableSupplier = () -> new Runnable() {
+                @Override
+                public void run() {
+                    System.out.println("hello");
+                }
+            };
+
+            System.out.println(intSupplier.get());
+
+            runnableSupplier.get().run();
         }
 
         /**
@@ -215,6 +308,9 @@ public class FunctionalProgrammingTest {
         void Predicate() {
             final Predicate<String> predicate = value -> value.equals("Predicate");
             System.out.println(predicate.test("Predicate"));
+
+            final Predicate<Integer> intPredicate = value -> value == 2;
+            System.out.println(intPredicate.test(2));
         }
 
         /**
@@ -227,6 +323,9 @@ public class FunctionalProgrammingTest {
         void Optional() {
             final var optional = Optional.of("Optional");
             System.out.println(optional.get());
+
+            final Optional optional2 = Optional.of("hello");
+            System.out.println(optional2.get());
         }
 
         /**
@@ -236,39 +335,46 @@ public class FunctionalProgrammingTest {
         @Test
         @DisplayName("기존 함수의 중복을 람다를 활용해 중복을 제거한다")
         void 기존_함수의_중복을_람다를_활용해_중복을_제거한다() {
+
+            interface Sum {
+                int calculate();
+            }
+
             class Calculator {
                 // TODO: 람다를 활용하여 sum 메서드를 통해 중복을 제거하세요.
                 static int sumAll(final List<Integer> numbers) {
-                    var total = 0;
+                    /*var total = 0;
                     for (final var number : numbers) {
                         total += number;
                     }
 
-                    return total;
+                    return total;*/
+                    return sum(numbers, condition -> condition.equals(condition));
                 }
 
                 // TODO: 람다를 활용하여 sum 메서드를 통해 중복을 제거하세요.
                 static int sumAllEven(final List<Integer> numbers) {
-                    var total = 0;
+                    /*var total = 0;
                     for (final var number : numbers) {
                         if (number % 2 == 0) {
                             total += number;
                         }
                     }
 
-                    return total;
+                    return total;*/
+                    return sum(numbers, condition -> condition%2 == 0);
                 }
 
                 // TODO: 람다를 활용하여 sum 메서드를 통해 중복을 제거하세요.
                 static int sumAllOverThree(final List<Integer> numbers) {
-                    var total = 0;
+        /*            var total = 0;
                     for (final var number : numbers) {
                         if (number > 3) {
                             total += number;
                         }
-                    }
+                    }*/
 
-                    return total;
+                    return sum(numbers, condition -> condition > 3);
                 }
 
                 private static int sum(
@@ -276,7 +382,10 @@ public class FunctionalProgrammingTest {
                         final Predicate<Integer> condition
                 ) {
                     // TODO: 조건에 맞게 필터링하여 합계를 구하는 기능을 구현하세요.
-                    return 0;
+                    return numbers.stream()
+                        .filter(condition::test)
+                        .mapToInt(Integer::intValue)
+                        .sum();
                 }
             }
 
@@ -344,6 +453,10 @@ public class FunctionalProgrammingTest {
                 }
             }
 
+            List<User> complete = filteredUsers.stream()
+                .filter(user -> user.age() < 20)
+                .toList();
+
             // Note: 나이 기준으로 정렬
             final var sortedUsers = new ArrayList<User>(filteredUsers);
             for (int i = 0, end = sortedUsers.size(); i < end; i++) {
@@ -356,20 +469,49 @@ public class FunctionalProgrammingTest {
                 }
             }
 
+            List<User> sortedUser = sortedUsers.stream()
+                .sorted((user1, user2) -> user1.age - user2.age)
+                .toList();
+
+            System.out.println(sortedUser);
+
             // Note: 이름 추출
             final var names = new ArrayList<String>();
             for (final var user : sortedUsers) {
                 names.add(user.name());
             }
 
+            sortedUser.forEach(user -> {
+                    names.add(user.name());
+            });
+
             // Note: 출력
             for (final var name : names) {
                 System.out.println(name);
             }
 
+            names.forEach(System.out::println);
+
             // -----------------------------------------------------------------
 
             // Note: 선언형으로 변경된 코드
+
+            users.stream()
+                    .filter(user -> user.age() >= 20)
+                        .sorted(Comparator.comparing(User::age))
+                .map(User::name)
+                .forEach(System.out::println);
+
+            Function<User, Integer> test = user -> user.age;
+
+            List<Integer> integers = new ArrayList<>(List.of(1, 2, 3, 4, 5, 6));
+
+            Stream<Integer> integerStream = integers.stream().filter(integer -> integer < 4);
+
+            List<Integer> list = integerStream.toList();
+
+            System.out.println(list);
+
             users.stream() // Note: 생성
                     .filter(user -> user.age() >= 20) // Note: 성인 필터 (가공)
                     .sorted(Comparator.comparing(User::age)) // Note: 나이 기준으로 정렬 (가공)
@@ -399,6 +541,13 @@ public class FunctionalProgrammingTest {
                     new Crew("겁재", "fo", 25),
                     new Crew("조부용", "brie", 12)
             );
+
+            Optional<Crew> maxAgeCrew1 = crews.stream()
+                .filter(crew -> crew.name.startsWith("김") && (crew.age > 24 && crew.age < 31)
+                    && crew.name.length() == 2)
+                .max(Comparator.comparing(Crew::age));
+
+            System.out.println(maxAgeCrew1);
 
             // TODO: 아래 코드를 선언형으로 변경하세요.
             final var filteredCrews = new ArrayList<Crew>();
@@ -445,6 +594,12 @@ public class FunctionalProgrammingTest {
                 }
             }
 
+            long resultCount = Arrays.stream(words)
+                .filter(word -> word.length() > 12)
+                .count();
+
+            System.out.println(resultCount);
+
             // -----------------------------------------------------------------
 
             assertThat(count).isEqualTo(1_946);
@@ -469,11 +624,17 @@ public class FunctionalProgrammingTest {
                 }
             }
 
+            Optional<String> reduce = numbers.stream().map(String::valueOf)
+                .reduce((a, b) -> a + ":" + a);
+
+            System.out.println(reduce.get());
+
             final var result = stringBuilder.toString();
 
             // -----------------------------------------------------------------
 
             assertThat(result).isEqualTo("1:2:3:4:5");
+
         }
 
         /**
@@ -488,6 +649,15 @@ public class FunctionalProgrammingTest {
             final var expected = 18;
 
             // TODO: 아래 코드를 Stream API를 활용하여 구현하세요.
+            int sum = numbers.stream()
+                .filter(number -> number > 2 && number <= 5)
+                .map(num -> num * 2)
+                .filter(number -> number > 7)
+                .mapToInt(Integer::intValue)
+                .sum();
+
+            System.out.println(sum);
+
             var result = 0;
             for (final Integer number : numbers) {
                 if (2 >= number) {
@@ -526,8 +696,21 @@ public class FunctionalProgrammingTest {
             final var contents = Files.readString(Paths.get("src/test/resources/war-and-peace.txt"));
 
             // TODO: 위 조건에 맞는 10개의 단어를 추출하세요.
-            // final var words = contents.split("\\P{L}+");
-            final var results = new ArrayList<String>();
+            final var words = contents.split("\\P{L}+");
+            List<String> results = Arrays.stream(words)
+                .filter(word -> word.length() > 12)
+                .distinct()
+                .sorted(Comparator.comparing(String::length))
+                .limit(100)
+                .filter(word -> Character.isLowerCase(word.charAt(1)))
+                .map(String::toLowerCase)
+                .sorted()
+                .limit(10)
+                .toList();
+
+//            final var results = new ArrayList<String>();
+
+
 
             // -----------------------------------------------------------------
             assertThat(results).containsExactly(
@@ -554,8 +737,17 @@ public class FunctionalProgrammingTest {
             final var contents = Files.readString(Paths.get("src/test/resources/war-and-peace.txt"));
 
             // TODO: 가장 많이 등장하는 단어의 수를 찾으세요.
-            // final var words = contents.split("\\P{L}+");
-            final var result = 0L;
+            final var words = contents.split("\\P{L}+");
+
+            final var result = Arrays.stream(words)
+                .collect(Collectors.groupingBy(Function.identity(),Collectors.counting()))
+                .entrySet()
+                .stream()
+                .max(Comparator.comparing(Map.Entry::getValue))
+                .map(Map.Entry::getValue)
+                .orElseThrow();
+
+//            final var result = 0L;
 
             // -----------------------------------------------------------------
             assertThat(result).isEqualTo(31_949L);
